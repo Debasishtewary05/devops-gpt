@@ -1,0 +1,21 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: DevOpsGPT CloudWatch Alarm
+
+Resources:
+
+  CPUAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: HighCPUAlarm
+      MetricName: CPUUtilization
+      Namespace: AWS/EC2
+      Statistic: Average
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 70
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: InstanceId
+          Value: i-0b32ff74e85b989d8  
+      AlarmActions:
+        - arn:aws:lambda:us-east-1:541172290899:function:alertProcessorLambda
