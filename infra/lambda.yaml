@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: DevOpsGPT Lambda Setup
+
+Resources:
+
+  AlertLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: alert-lambda-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+
+  AlertProcessorLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: alertProcessorLambda
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt AlertLambdaRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          from datetime import datetime
+
+          dynamodb = boto3.resource('dynamodb')
+          table = dynamodb.Table('alerts')
+
+          def lambda_handler(event, context):
+              print("EVENT:", event)
+
+              alert = {
+                  "alertId": str(datetime.now().timestamp()),
+                  "serverId": "EC2-Instance",
+                  "severity": "CRITICAL",
+                  "message": "High CPU Usage",
+                  "timestamp": str(datetime.now())
+              }
+
+              table.put_item(Item=alert)
+
+              return {
+                  "statusCode": 200,
+                  "body": "Stored"
+              }
